@@ -4,6 +4,7 @@ let setupDone = false;
 let selectMode = false;
 let resizeMode = undefined;
 let tempLine = undefined;
+let saving = false;
 
 const lines = [];
 
@@ -21,11 +22,14 @@ function draw() {
   if (!setupDone) {
     return;
   }
-  drawable.forEach((d) => d.draw());
-  lines.forEach((l) => l.draw(drawingContext));
+  drawable.forEach((d) => d.draw({ saving }));
+  lines.forEach((l) => l.draw(drawingContext, saving));
   if (tempLine) tempLine.draw(drawingContext, { x: mouseX, y: mouseY });
 
-  tools.draw();
+  if (!saving) {
+    tools.draw();
+  }
+
   moveOnKeyPress();
 }
 
@@ -40,6 +44,9 @@ function mouseClicked(_event) {
         break;
       case "ellipse":
         drawable.push(new EllipseEl(drawable.length));
+        break;
+      case "save":
+        saveThisCanvas();
         break;
     }
     return false;
@@ -59,6 +66,8 @@ function mouseMoved() {
 function mouseReleased() {
   tempLine = undefined;
   resizeMode = undefined;
+
+  lines[0]?.addPoint(100, 200)
 }
 
 function mouseDragged() {
@@ -95,7 +104,7 @@ function mouseDragged() {
 
   // if(selectMode){
   //   drawable.some((d) => d.collisionCheckBox(pos, "dragged"))
-    
+
   // }
 }
 
@@ -149,4 +158,13 @@ function debounce(func, intervalF, continueAt) {
   }
   clearTimeout(ref);
   ref = setTimeout(() => (interval = 0), intervalF);
+}
+
+function saveThisCanvas() {
+  saving = true;
+  console.log(frameRate())
+  setTimeout(() => {
+    saveCanvas('mindmap', 'png')
+    saving = false;
+  }, (1000 / frameRate()) * 10);
 }

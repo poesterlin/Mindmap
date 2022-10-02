@@ -94,19 +94,21 @@ class Drawable {
     throw "abstract method";
   }
 
-  draw() {
+  draw({ saving }) {
     this.setUpColor();
     this.drawEl();
-    if (this.focused) {
-      this.handles.forEach((h) => {
-        rect(h.x, h.y, handelSize, handelSize);
-      });
-    } else {
-      fill(30, 200, 70, 200);
-      stroke(100);
-      this.links.forEach((l) => {
-        ellipse(l.x, l.y, handelSize, handelSize);
-      });
+    if (!saving) {
+      if (this.focused) {
+        this.handles.forEach((h) => {
+          rect(h.x, h.y, handelSize, handelSize);
+        });
+      } else {
+        fill(30, 200, 70, 200);
+        stroke(100);
+        this.links.forEach((l) => {
+          ellipse(l.x, l.y, handelSize, handelSize);
+        });
+      }
     }
     this.setUpText();
     textAlign(CENTER);
@@ -136,7 +138,7 @@ class Drawable {
     return false;
   }
 
-  collisionCheckBox(box){
+  collisionCheckBox(box) {
     return this.anchor.x < box.x + box.width &&
       this.anchor.x + this.drawWidth > box.x &&
       this.anchor.y < box.y + box.height &&

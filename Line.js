@@ -6,67 +6,87 @@ class Line {
     this.toIdx = toIdx;
   }
 
-  draw() {}
+  draw() { }
 
-  calcPos(el, idx, offset) {
+  calcPos({ anchor, height, drawWidth }, idx, offset) {
+    if (!height) {
+      height = 0;
+    }
+    if (!drawWidth) {
+      drawWidth = 0;
+    }
     switch (idx) {
       case 0:
-        return { x: el.anchor.x + el.drawWidth / 2, y: el.anchor.y - offset };
+        return { x: anchor.x + drawWidth / 2, y: anchor.y - offset };
       case 1:
-        return { x: el.anchor.x + el.drawWidth + offset, y: el.anchor.y + el.height / 2 };
+        return { x: anchor.x + drawWidth + offset, y: anchor.y + height / 2 };
       case 2:
-        return { x: el.anchor.x + el.drawWidth / 2, y: el.anchor.y + el.height + offset };
+        return { x: anchor.x + drawWidth / 2, y: anchor.y + height + offset };
       case 3:
-        return { x: el.anchor.x - offset, y: el.anchor.y + el.height / 2 };
+        return { x: anchor.x - offset, y: anchor.y + height / 2 };
     }
   }
 }
 
 class LineBetweenDrawables extends Line {
   constructor(from, fromIdx, to, toIdx) {
-    super();
+    super(from, fromIdx, to, toIdx);
 
-    this.from = from;
-    this.to = to;
-    this.fromIdx = fromIdx;
-    this.toIdx = toIdx;
+    this.triangleSize = 5;
+
+    this.points = [{ el: from, idx: fromIdx }, { el: to, idx: toIdx }];
   }
 
-  draw(ctx) {
-    const fromPoint = this.calcPos(this.from, this.fromIdx, 0);
-    let toPoint = this.calcPos(this.to, this.toIdx, 30);
+  addPoint(x, y) {
+    const first = this.points.pop();
+    this.points.push({ el: { drawWidth: 0, anchor: { x, y }, height: 0 }, idx: -1 })
+    this.points.push(first);
+  }
+
+  draw(ctx, saving) {
+    const fromPoint = this.calcPos(this.points[0].el, this.points[0].idx, 0);
     ctx.beginPath();
     ctx.moveTo(fromPoint.x, fromPoint.y);
-
     let wrongSide = false;
-    switch (this.toIdx) {
-      case 0:
-        wrongSide = fromPoint.y > toPoint.y;
-        break;
-      case 1:
-        wrongSide = fromPoint.x < toPoint.x;
-        break;
-      case 2:
-        wrongSide = fromPoint.y < toPoint.y;
-        break;
-      case 3:
-        wrongSide = fromPoint.x > toPoint.x;
-        break;
-    }
 
-    if (wrongSide) {
-      toPoint = this.calcPos(this.to, this.toIdx, -30);
-    }
+    const toPoint = this.points.slice(1).reduce((from, to) => {
+      let idx = to.idx;
+      let offset = 2 * this.triangleSize;
+      if (to.idx === -1) {
+        idx = 0;
+        offset = 0;
+      }
+      let toPoint = this.calcPos(to.el, idx, offset);
 
-    if (this.toIdx === 0 || this.toIdx === 2) {
-      ctx.bezierCurveTo(fromPoint.x, fromPoint.y, toPoint.x, fromPoint.y, toPoint.x, toPoint.y);
-    } else {
-      ctx.bezierCurveTo(fromPoint.x, fromPoint.y, fromPoint.x, toPoint.y, toPoint.x, toPoint.y);
-    }
+      switch (idx) {
+        case 0:
+          wrongSide = from.y > toPoint.y;
+          break;
+        case 1:
+          wrongSide = from.x < toPoint.x;
+          break;
+        case 2:
+          wrongSide = from.y < toPoint.y;
+          break;
+        case 3:
+          wrongSide = from.x > toPoint.x;
+          break;
+      }
 
+      if (wrongSide) {
+        toPoint = this.calcPos(to.el, idx, -offset);
+      }
+
+      if (this.toIdx === 0 || this.toIdx === 2) {
+        ctx.bezierCurveTo(from.x, from.y, toPoint.x, from.y, toPoint.x, toPoint.y);
+      } else {
+        ctx.bezierCurveTo(from.x, from.y, from.x, toPoint.y, toPoint.x, toPoint.y);
+      }
+
+      return toPoint;
+    }, fromPoint);
     ctx.stroke();
     push();
-    toPoint = this.calcPos(this.to, this.toIdx, 0);
     translate(toPoint.x, toPoint.y);
     angleMode(DEGREES);
     rotate(this.toIdx * 90);
@@ -74,16 +94,24 @@ class LineBetweenDrawables extends Line {
       rotate(180);
     }
     fill(0);
-    triangle(0, 0, 15, -30, -15, -30);
+    triangle(0, 0, this.triangleSize, -2 * this.triangleSize, -this.triangleSize, -2 * this.triangleSize);
     pop();
+
+
+    // draw control points
+    if (saving) {
+      return;
+    }
+    const r = 5;
+    this.points.slice(1, -1).forEach(p => {
+      ellipse(p.el.anchor.x - r, p.el.anchor.y - r, 2 * r, 2 * r);
+    })
   }
 }
 
 class TempLine extends Line {
   constructor(from, fromIdx) {
-    super();
-    this.from = from;
-    this.fromIdx = fromIdx;
+    super(from, fromIdx);
   }
 
   draw(ctx, toPoint) {

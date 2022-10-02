@@ -1,7 +1,7 @@
 const imgSize = 48;
 
 class Tools {
-  icons = ["square", "ellipse"];
+  icons = ["square", "ellipse", "save"];
   images = [];
 
   constructor() {
