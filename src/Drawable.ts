@@ -1,10 +1,16 @@
 import p5 from "p5";
+import { Computable } from "./Computable";
 
 const padding = 5;
 const maxWidth = 250;
-const handelSize = 10;
+export const handelSize = 10;
+export const headerSize = 40;
+export const inputSpacing = 20;
 
-export class Drawable {
+
+export abstract class Drawable {
+  p5: p5;
+
   focused = false;
   hover = false;
   zIndex = 0;
@@ -12,16 +18,14 @@ export class Drawable {
   textVal = "";
   textLength = 0;
   cursor = 0;
-  width = 150;
-  height = 150;
+  width = 100;
+  height = headerSize;
 
-
-  p5: p5;
   anchor: { x: number; y: number; };
   defaultColor: { textStyle: string; strokeWeight: number; stroke: string; fill: string; textSize: number; textColor: string; };
   style: any;
 
-  constructor(p5: p5, z: number) {
+  constructor(p5: p5, z: number, public computable: Computable) {
     this.p5 = p5;
     this.zIndex = z;
     this.anchor = { x: 50, y: 50 };
@@ -34,10 +38,11 @@ export class Drawable {
       stroke: p5.color(0).toString(),
       fill: p5.color(255).toString(),
       textSize: 20,
-      textColor: p5.color(0).toString(),
+      textColor: p5.color(255).toString(),
     };
 
     this.style = JSON.parse(JSON.stringify(this.defaultColor));
+    this.text = computable.constructor.name;
   }
 
   reset() {
@@ -54,7 +59,7 @@ export class Drawable {
     }
   }
 
-  setUpText() {
+  setupText() {
     this.setStyle({ ...this.style, stroke: 0, fill: this.style.textColor, strokeWeight: 0 });
   }
 
@@ -62,26 +67,25 @@ export class Drawable {
     this.setStyle(this.defaultColor);
   }
 
-  get handles() {
-    return [
-      { x: this.anchor.x, y: this.anchor.y },
-      { x: this.anchor.x + this.drawWidth, y: this.anchor.y },
-      { x: this.anchor.x, y: this.anchor.y + this.height },
-      { x: this.anchor.x + this.drawWidth, y: this.anchor.y + this.height },
-    ].map(({ x, y }) => ({ x: x - handelSize / 2, y: y - handelSize / 2 }));
+  get inputs() {
+    const num = this.computable.fixedInputs ? this.computable.nInputs : this.computable.prev.length + 1;
+
+    return new Array(num).fill(null).map((_, i) => ({
+      x: this.anchor.x,
+      y: this.anchor.y + headerSize + (i + 0.5) * inputSpacing,
+    }))
   }
 
-  get links() {
-    return [
-      { x: this.anchor.x + this.drawWidth / 2, y: this.anchor.y },
-      { x: this.anchor.x + this.drawWidth, y: this.anchor.y + this.height / 2 },
-      { x: this.anchor.x + this.drawWidth / 2, y: this.anchor.y + this.height },
-      { x: this.anchor.x, y: this.anchor.y + this.height / 2 },
-    ].map(({ x, y }) => ({ x: x - handelSize / 2, y: y - handelSize / 2 }));
+  get outputs() {
+    const num = this.computable.outputTypes.length;
+
+    return new Array(num).fill(null).map((_, i) => ({
+      x: this.anchor.x + this.drawWidth - handelSize,
+      y: this.anchor.y + headerSize + (i + 0.5) * inputSpacing,
+    }))
   }
 
   setStyle(s) {
-
     this.p5.strokeWeight(s.strokeWeight);
     this.p5.textStyle(s.textStyle);
     this.p5.textSize(s.textSize);
@@ -102,47 +106,35 @@ export class Drawable {
     return Math.min(Math.max(this.width, this.textLength + padding * 2), maxWidth);
   }
 
-  drawEl() {
-    throw "abstract method";
-  }
+  abstract drawEl(): void;
 
-  draw({ saving }) {
+  draw() {
     this.setUpColor();
     this.drawEl();
-    if (!saving) {
-      if (this.focused) {
-        this.handles.forEach((h) => {
-          this.p5.rect(h.x, h.y, handelSize, handelSize);
-        });
-      } else {
-        this.p5.fill(30, 200, 70, 200);
-        this.p5.stroke(100);
-        this.links.forEach((l) => {
-          this.p5.ellipse(l.x, l.y, handelSize, handelSize);
-        });
-      }
-    }
-    this.setUpText();
-    this.p5.textAlign(this.p5.CENTER);
-    this.p5.text(this.text, this.anchor.x + padding, this.anchor.y + this.height / 2 + 4, this.drawWidth);
+    this.p5.fill(30, 200, 70, 200);
+    this.p5.stroke(100);
+    this.inputs.forEach((l) => {
+      this.p5.ellipse(l.x, l.y, handelSize, handelSize);
+    });
+    this.outputs.forEach((l) => {
+      this.p5.ellipse(l.x, l.y, handelSize, handelSize);
+    });
     this.resetColor();
   }
 
-  handleCheck(p) {
-    if (!this.focused) {
-      return -1;
+  connectorCheck(p: { x: number, y: number }) {
+    const inputCheck = this.checkCollisionArray(p, this.inputs);
+    if (inputCheck > -1) {
+      return { isInput: true, idx: inputCheck }
     }
-    return this.checkCollisionArray(p, this.handles);
+    const outputCheck = this.checkCollisionArray(p, this.outputs);
+    if (outputCheck > -1) {
+      return { isInput: false, idx: outputCheck }
+    }
+    return { idx: -1, isInput: false };
   }
 
-  connectorCheck(p) {
-    if (this.focused) {
-      return -1;
-    }
-    return this.checkCollisionArray(p, this.links);
-  }
-
-  checkCollisionArray({ x, y }, arr) {
+  checkCollisionArray({ x, y }, arr: { x: number, y: number }[]) {
     return arr.findIndex((h) => x > h.x && x < h.x + handelSize && y > h.y && y < h.y + handelSize);
   }
 
@@ -165,33 +157,7 @@ export class Drawable {
     this.height = Math.min(Math.max(50, val), maxWidth);
   }
 
-  resize(cornerIdx, { x, y }) {
-    switch (cornerIdx) {
-      case 0:
-        this.setWidth(this.width + this.anchor.x - x);
-        this.setHeight(this.height + this.anchor.y - y);
-        this.anchor = { x, y };
-        break;
-      case 1:
-        this.setHeight(this.height + this.anchor.y - y);
-        this.setWidth(x - this.anchor.x);
-        this.anchor.y = y;
-        break;
-      case 2:
-        this.setHeight(y - this.anchor.y);
-        this.setWidth(this.width + this.anchor.x - x);
-        this.anchor.x = x;
-        break;
-      case 3:
-        this.setHeight(y - this.anchor.y);
-        this.setWidth(x - this.anchor.x);
-    }
-  }
-
   collision({ x, y }, mode) {
-    if (this.handleCheck({ x, y }) > -1) {
-      return true;
-    }
     const res = this.collisionCheck({ x, y });
     this.hover = res;
 

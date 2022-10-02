@@ -1,24 +1,32 @@
 import p5, { Image } from "p5";
+import { Add, ConsoleOutput, Equals, If, Input, Subtract } from "./ComputingClasses";
 
 const imgSize = 48;
 
 export class Tools {
-  icons = ["square", "ellipse", "save"];
-  images: Image[] = [];
+  tools = [
+    { icon: "square", init: () => new Input(), tip: "Input" },
+    { icon: "ellipse", init: () => new Add(), tip: "Add" },
+    { icon: "ellipse", init: () => new Subtract(), tip: "Subtract" },
+    { icon: "ellipse", init: () => new Equals(), tip: "Equals" },
+    { icon: "ellipse", init: () => new If(), tip: "If" },
+    { icon: "square", init: () => new ConsoleOutput(), tip: "Output" },
+  ];
+  images: { [image: string]: Image } = {};
 
   constructor(private p5: p5) {
   }
 
   loadImages() {
-    for (const icon of this.icons) {
-      const img: Image = this.p5.loadImage("/assets/" + icon + "Small.png");
-      this.images.push(img);
+    for (const tool of this.tools) {
+      const img: Image = this.p5.loadImage("/assets/" + tool.icon + "Small.png");
+      this.images[tool.icon] = img;
     }
   }
 
   draw() {
-    this.images.forEach((img, idx) => {
-      this.p5.image(img, 0, idx * 50);
+    this.tools.forEach((img, idx) => {
+      this.p5.image(this.images[img.icon], 0, idx * 50);
     });
   }
 
@@ -27,6 +35,6 @@ export class Tools {
       return undefined;
     }
 
-    return this.icons[~~(y / imgSize)];
+    return this.tools[~~(y / imgSize)];
   }
 }
