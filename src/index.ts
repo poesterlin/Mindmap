@@ -4,6 +4,7 @@ import { draw, keyPressed, mouseClicked, mouseDragged, mouseMoved, mouseReleased
 import { testCompute } from "./ComputeEngine";
 
 const containerElement = document.getElementById('p5-container');
+containerElement.addEventListener("contextmenu", (e) => e.preventDefault());
 
 const sketch = (p: p5) => {
     p.preload = () => preload(p);

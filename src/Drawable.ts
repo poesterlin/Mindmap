@@ -1,5 +1,6 @@
 import p5 from "p5";
-import { Computable } from "./Computable";
+import { Computable, ComputeUnit } from "./Computable";
+import { Boolean } from "./ComputingClasses";
 
 const padding = 5;
 const maxWidth = 250;
@@ -71,7 +72,7 @@ export abstract class Drawable {
     const num = this.computable.fixedInputs ? this.computable.nInputs : this.computable.prev.length + 1;
 
     return new Array(num).fill(null).map((_, i) => ({
-      x: this.anchor.x,
+      x: this.anchor.x - handelSize / 2,
       y: this.anchor.y + headerSize + (i + 0.5) * inputSpacing,
     }))
   }
@@ -80,7 +81,7 @@ export abstract class Drawable {
     const num = this.computable.outputTypes.length;
 
     return new Array(num).fill(null).map((_, i) => ({
-      x: this.anchor.x + this.drawWidth - handelSize,
+      x: this.anchor.x + this.drawWidth - handelSize / 2,
       y: this.anchor.y + headerSize + (i + 0.5) * inputSpacing,
     }))
   }
@@ -111,11 +112,14 @@ export abstract class Drawable {
   draw() {
     this.setUpColor();
     this.drawEl();
-    this.p5.fill(30, 200, 70, 200);
-    this.p5.stroke(100);
+    this.p5.fill(100, 240, 70);
+    this.p5.noStroke();
     this.inputs.forEach((l) => {
       this.p5.ellipse(l.x, l.y, handelSize, handelSize);
     });
+
+    this.p5.fill(100, 220, 200);
+
     this.outputs.forEach((l) => {
       this.p5.ellipse(l.x, l.y, handelSize, handelSize);
     });
@@ -163,6 +167,9 @@ export abstract class Drawable {
 
     if (mode === "clicked") {
       this.focused = res && !this.lastDrag;
+      if (this.focused && this.computable instanceof Boolean) {
+        this.computable.value = new ComputeUnit(!this.computable.value?.value)
+      }
     }
 
     if (mode === "dragged" && res) {

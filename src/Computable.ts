@@ -66,7 +66,7 @@ export abstract class SimpleComputable extends Computable {
     fixedInputs = false;
 
     public compute(...args: ComputeUnit[]): ComputeUnit {
-        return args.filter(a => !!a?.value).reduce((sum, value) => this.combine(value, sum), undefined);
+        return args.filter(a => a?.value !== undefined).reduce((sum, value) => this.combine(value, sum), undefined);
     }
 
     protected abstract combine(u1: ComputeUnit, u2?: ComputeUnit): ComputeUnit;

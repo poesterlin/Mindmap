@@ -1,20 +1,28 @@
 import p5 from "p5";
 import { Computable, ComputeUnit } from "./Computable";
 import { ComputeEngine } from "./ComputeEngine";
+import { Add, And, ConsoleOutput, Equals, If, Input, Or, Ternary, Subtract } from "./ComputingClasses";
 import { Drawable } from "./Drawable";
 import { TempLine, LineBetweenDrawables } from "./Line";
 import { SquareEl } from "./SquareEl";
 import { Tools } from "./Tools";
 
 
-const drawable: Drawable[] = [];
-const engine = new ComputeEngine();
+let drawable: Drawable[] = [];
+let engine = new ComputeEngine();
 let setupDone = false;
 let tempLine: TempLine | undefined = undefined;
 let tools: Tools;
 let tip: string | undefined = undefined;
 
-const lines: LineBetweenDrawables[] = [];
+let lines: LineBetweenDrawables[] = [];
+
+const functions = [
+  { name: "save", fn: (p: p5) => serialize(p) },
+  { name: "load", fn: (p: p5) => load(p) },
+  { name: "clear values", fn: (p: p5) => { engine.computables.forEach(c => c.value = undefined) } },
+  { name: "clear", fn: (p: p5) => { drawable = []; engine = new ComputeEngine(); lines = [] } },
+]
 
 export function preload(p: p5) {
   if (!p) {
@@ -36,6 +44,21 @@ export function draw(p: p5) {
     return;
   }
 
+  lines = [];
+  engine.computables.forEach(c => {
+    const outputDraw = drawable.find(d => d.computable.id === c.id);
+
+    c.outputTypes.forEach((outputType, i) => {
+      c.next[outputType].forEach(output => {
+        const inputDraw = drawable.find(d => d.computable.id === output.id);
+        const idx = inputDraw.computable.prev.findIndex(i => i.id === c.id);
+
+        lines.push(new LineBetweenDrawables(p, outputDraw, { idx: i, isInput: false }, inputDraw, { idx, isInput: true }))
+      })
+    })
+
+  })
+
   p.background(255);
   drawable.forEach((d) => d.draw());
   lines.forEach((l) => l.draw());
@@ -52,6 +75,7 @@ export function draw(p: p5) {
     p.stroke(0);
     p.rect(p.mouseX + 40, p.mouseY, 100, 20, 5);
     p.fill(255);
+    p.textAlign(p.LEFT)
     p.noStroke();
     p.textSize(12);
     p.text(tip, p.mouseX + 45, p.mouseY + 5, 100, 20);
@@ -59,6 +83,19 @@ export function draw(p: p5) {
 
   engine.reset();
   engine.run();
+
+  const h = 20, w = 100;
+  functions.forEach((f, i) => {
+    p.fill(0);
+    p.stroke(0);
+    p.rect(p.width - w, i * h, w, h);
+
+    p.textAlign(p.CENTER)
+    p.fill(255);
+    p.noStroke();
+    p.textSize(12);
+    p.text(f.name, p.width - w, i * h + 3, w, h);
+  });
 }
 
 export function mouseClicked(p: p5) {
@@ -70,6 +107,14 @@ export function mouseClicked(p: p5) {
     let computable = tool.init();
     engine.addOperator(computable);
     drawable.push(new SquareEl(p, drawable.length, computable))
+  }
+
+
+  const h = 20, w = 100;
+  if (p.width - mouseX < w && mouseY < (functions.length + 1) * h) {
+    const fn = functions[~~(mouseY / h)].fn;
+    fn(p);
+    return;
   }
 
   drawable.forEach((d) => d.reset());
@@ -93,6 +138,16 @@ export function mouseReleased(p: p5) {
 export function mouseDragged(p: p5) {
   const { mouseX, mouseY } = p;
   const pos = { x: mouseX, y: mouseY };
+
+  if (p.mouseButton === p.RIGHT) {
+    
+    drawable.forEach(d => {
+      d.anchor.x += mouseX - p.pmouseX;
+      d.anchor.y += mouseY - p.pmouseY;
+    }); 
+
+    return false;
+  }
 
   const connectionStart = drawable.find((d) => d.connectorCheck(pos).idx > -1);
   const connect = connectionStart?.connectorCheck(pos);
@@ -169,8 +224,6 @@ export function moveOnKeyPress(p: p5) {
 }
 
 export function keyPressed(p: p5, event: any) {
-
-
   const el = drawable.find((d) => d.focused);
   if (!el) {
     return;
@@ -207,4 +260,282 @@ function debounce(func, intervalF, continueAt) {
   }
   clearTimeout(ref);
   ref = setTimeout(() => (interval = 0), intervalF);
+}
+
+
+function load(p: p5,) {
+
+  const input = `
+  [
+    {
+      "id": 3829,
+      "position": {
+        "x": 278,
+        "y": 308
+      },
+      "type": "Input",
+      "next": {
+        "output": [
+          1745,
+          6273
+        ]
+      },
+      "value": 2
+    },
+    {
+      "id": 5687,
+      "position": {
+        "x": 654,
+        "y": 265
+      },
+      "type": "Boolean",
+      "next": {
+        "output": [
+          8835,
+          89
+        ]
+      },
+      "value": true
+    },
+    {
+      "id": 239,
+      "position": {
+        "x": 612,
+        "y": 565
+      },
+      "type": "Boolean",
+      "next": {
+        "output": [
+          2012
+        ]
+      },
+      "value": true
+    },
+    {
+      "id": 1765,
+      "position": {
+        "x": 279,
+        "y": 133
+      },
+      "type": "Boolean",
+      "next": {
+        "output": [
+          1745,
+          1058
+        ]
+      },
+      "value": true
+    },
+    {
+      "id": 4223,
+      "position": {
+        "x": 278,
+        "y": 224
+      },
+      "type": "Input",
+      "next": {
+        "output": [
+          1745,
+          9854,
+          6273
+        ]
+      },
+      "value": 1
+    },
+    {
+      "id": 1745,
+      "position": {
+        "x": 480,
+        "y": 151
+      },
+      "type": "Ternary",
+      "next": {
+        "output": [
+          9854
+        ]
+      },
+      "value": 1
+    },
+    {
+      "id": 6273,
+      "position": {
+        "x": 603,
+        "y": 378
+      },
+      "type": "Subtract",
+      "next": {
+        "output": [
+          2012
+        ]
+      },
+      "value": 0
+    },
+    {
+      "id": 9854,
+      "position": {
+        "x": 653,
+        "y": 140
+      },
+      "type": "Equals",
+      "next": {
+        "output": [
+          1058
+        ]
+      },
+      "value": true
+    },
+    {
+      "id": 1058,
+      "position": {
+        "x": 792,
+        "y": 209
+      },
+      "type": "Equals",
+      "next": {
+        "output": [
+          8835
+        ]
+      },
+      "value": true
+    },
+    {
+      "id": 8835,
+      "position": {
+        "x": 932,
+        "y": 236
+      },
+      "type": "Or",
+      "next": {
+        "output": [
+          89
+        ]
+      },
+      "value": true
+    },
+    {
+      "id": 89,
+      "position": {
+        "x": 1053,
+        "y": 272
+      },
+      "type": "And",
+      "next": {
+        "output": [
+          9367
+        ]
+      },
+      "value": true
+    },
+    {
+      "id": 6315,
+      "position": {
+        "x": 274,
+        "y": 395
+      },
+      "type": "Input",
+      "next": {
+        "output": [
+          6273
+        ]
+      },
+      "value": 1
+    },
+    {
+      "id": 2012,
+      "position": {
+        "x": 800,
+        "y": 440
+      },
+      "type": "Equals",
+      "next": {
+        "output": [
+          8835
+        ]
+      },
+      "value": false
+    },
+    {
+      "id": 9367,
+      "position": {
+        "x": 1212,
+        "y": 352
+      },
+      "type": "ConsoleOutput",
+      "next": {},
+      "value": "true"
+    }
+  ]
+  `;
+
+  const arr: {
+    id: number;
+    position: {
+      x: number, y: number
+    };
+    type: string;
+    next: { [key: string]: number[] };
+    value: string
+  }[] = JSON.parse(input);
+
+  drawable = [];
+  lines = [];
+  engine = new ComputeEngine();
+
+  const map = new Map<number, Computable>();
+
+  // setup objects
+  arr.forEach(element => {
+    const [type, _] = [
+      [() => new Input(), "Input"],
+      [() => new Boolean(), "Boolean"],
+      [() => new Add(), "Add"],
+      [() => new Subtract(), "Subtract"],
+      [() => new And(), "And"],
+      [() => new Or(), "Or"],
+      [() => new If(), "If"],
+      [() => new Equals(), "Equals"],
+      [() => new Ternary(), "Ternary"],
+      [() => new ConsoleOutput(), "ConsoleOutput"],
+    ].find(([_, name]) => name === element.type);
+
+    const inst: Computable = type();
+    engine.addOperator(inst);
+    inst.value = new ComputeUnit(element.value);
+    inst.id = element.id;
+    map.set(element.id, inst);
+  });
+
+  // link objects
+  arr.forEach(jsonEl => {
+    Object.keys(jsonEl.next).forEach(t => {
+      jsonEl.next[t].forEach(inputComp => {
+
+        engine.link({ isInput: map.get(inputComp), isOutput: map.get(jsonEl.id), outputType: t })
+      });
+    });
+  });
+
+  // convert to drawable
+  arr.forEach((element, i) => {
+    const draw = new SquareEl(p, i, map.get(element.id));
+    draw.anchor = element.position;
+    drawable.push(draw);
+  });
+}
+
+function serialize(p5: p5) {
+  const obj = drawable.map(d => {
+    const obj = {};
+    d.computable.outputTypes.forEach(c => obj[c] = d.computable.next[c].map(c => c.id));
+
+    return {
+      id: d.computable.id,
+      position: d.anchor,
+      type: d.computable.constructor.name,
+      next: obj,
+      value: d.computable.value?.value,
+    }
+  });
+
+  p5.saveJSON(obj, "");
 }

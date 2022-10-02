@@ -1,5 +1,5 @@
 import { Computable, ComputeUnit } from "./Computable";
-import { Input, Add, If, ConsoleOutput, Equals } from "./ComputingClasses";
+import { Input, Add, If, ConsoleOutput, Equals, Boolean } from "./ComputingClasses";
 
 export function testCompute() {
 
@@ -44,15 +44,15 @@ export function testCompute() {
 
 export class ComputeEngine {
     public debug = true;
-    private computables: Computable[] = [];
+    public computables: Computable[] = [];
     private PCs: number[] = [];
     public logs: string[] = [];
 
     public run() {
         let c = 0;
         while (this.PCs.length > 0) {
-            if (c >= 1000) {
-                throw new Error("infinite loop")
+            if (c >= 10000) {
+                return;
             }
 
             c += 1;
@@ -82,14 +82,19 @@ export class ComputeEngine {
     public addOperator(...computable: Computable[]) {
         this.computables.push(...computable);
         this.reset()
-
     }
 
-    reset() {
-        this.PCs.push(...this.computables.filter(c => c instanceof Input).map(i => i.id))
+    public reset() {
+        this.PCs.push(...this.computables.filter(c => c instanceof Input || c instanceof Boolean).map(i => i.id))
     }
 
     public link(ops: { isOutput: Computable, outputType?: string; isInput: Computable }) {
+        if (ops.isInput.fixedInputs && ops.isInput.prev.length >= ops.isInput.nInputs) {
+            return
+        }
+        if (ops.isInput.prev.some(p => p.id === ops.isOutput.id)) {
+            return;
+        }
         ops.isInput.prev.push(ops.isOutput);
         ops.isOutput.next[ops.outputType ?? "output"].push(ops.isInput);
     }

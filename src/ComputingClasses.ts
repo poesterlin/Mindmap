@@ -9,13 +9,27 @@ export class Input extends Computable {
     }
 }
 
+export class Boolean extends Computable {
+    nInputs = 0;
+    fixedInputs = true;
+
+    constructor() {
+        super();
+        this.value = new ComputeUnit(true);
+    }
+
+    public compute(..._args: ComputeUnit[]): ComputeUnit {
+        return this.value;
+    }
+}
+
 export class ConsoleOutput extends Computable {
     outputTypes = [];
     fixedInputs = false;
 
     public compute(...args: ComputeUnit[]): ComputeUnit {
-        console.log("Output: ", ...args.map(a => a.value));
-        return new ComputeUnit(args.map(a => a.asString()).join(", "));
+        console.log("Output: ", ...args.map(a => a?.value));
+        return new ComputeUnit(args.map(a => a?.asString()).join(", "));
     }
 }
 
@@ -46,7 +60,7 @@ export class Equals extends SimpleComputable {
 
 export class And extends SimpleComputable {
     protected combine(u1: ComputeUnit, u2?: ComputeUnit): ComputeUnit {
-        return new ComputeUnit(u1.asBoolean() && (u2?.asBoolean() ?? false));
+        return new ComputeUnit(u1.asBoolean() && (u2?.asBoolean() ?? true));
     }
 }
 
@@ -68,16 +82,16 @@ export class If extends Computable {
 
     public compute(...args: ComputeUnit[]): ComputeUnit {
         const val = args[0];
-        this.runOutputs = val.asBoolean() ? ["then"] : ["else"];
+        this.runOutputs = val?.asBoolean() ? ["then"] : ["else"];
         return val;
     }
 }
 
-export class Set extends Computable {
-    nInputs = 2;
+export class Ternary extends Computable {
+    nInputs = 3;
     fixedInputs = true;
 
     public compute(...args: ComputeUnit[]): ComputeUnit {
-        return args[0];
+        return args[0].asBoolean() ? args[1] : args[2];
     }
 }
