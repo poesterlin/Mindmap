@@ -1,14 +1,10 @@
 {
-    "compilerOptions": {
-        "outDir": "./built",
-        "target": "es2020",
-        "esModuleInterop": true
-    },
-    "lib": [
-        "es2022",
-        "dom",
-    ],
-    "include": [
-        "./src/**/*",
-    ]
+  "compilerOptions": {
+    "outDir": "./built",
+    "target": "es2020",
+    "esModuleInterop": true,
+    "moduleResolution": "Node"
+  },
+  "lib": ["es2022", "dom"],
+  "include": ["./src/**/*"]
 }

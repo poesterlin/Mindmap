@@ -21,6 +21,7 @@ export abstract class Drawable {
   cursor = 0;
   width = 100;
   height = headerSize;
+  runStarted = 0;
 
   anchor: { x: number; y: number; };
   defaultColor: { textStyle: string; strokeWeight: number; stroke: string; fill: string; textSize: number; textColor: string; };
@@ -44,6 +45,14 @@ export abstract class Drawable {
 
     this.style = JSON.parse(JSON.stringify(this.defaultColor));
     this.text = computable.constructor.name;
+
+    this.computable.onRun = () => {
+      this.runStarted = Date.now();
+    }
+
+    this.computable.onDone = () => {
+      this.runStarted = 0;
+    }
   }
 
   reset() {

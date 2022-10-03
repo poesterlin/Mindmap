@@ -1,10 +1,12 @@
-import { Computable, ComputeUnit, SimpleComputable } from "./Computable";
+import jsonata from "jsonata";
+import { AsyncComputable, Computable, ComputeUnit, SimpleComputable } from "./Computable";
 
 export class Input extends Computable {
     nInputs = 0;
     fixedInputs = true;
 
     public compute(..._args: ComputeUnit[]): ComputeUnit {
+        this.isDone = true;
         return this.value;
     }
 }
@@ -19,16 +21,18 @@ export class Boolean extends Computable {
     }
 
     public compute(..._args: ComputeUnit[]): ComputeUnit {
+        this.isDone = true;
         return this.value;
     }
 }
 
-export class ConsoleOutput extends Computable {
+export class Log extends Computable {
     outputTypes = [];
     fixedInputs = false;
 
     public compute(...args: ComputeUnit[]): ComputeUnit {
         console.log("Output: ", ...args.map(a => a?.value));
+        this.isDone = true;
         return new ComputeUnit(args.map(a => a?.asString()).join(", "));
     }
 }
@@ -83,6 +87,7 @@ export class If extends Computable {
     public compute(...args: ComputeUnit[]): ComputeUnit {
         const val = args[0];
         this.runOutputs = val?.asBoolean() ? ["then"] : ["else"];
+        this.isDone = true;
         return val;
     }
 }
@@ -92,6 +97,48 @@ export class Ternary extends Computable {
     fixedInputs = true;
 
     public compute(...args: ComputeUnit[]): ComputeUnit {
+        this.isDone = true;
         return args[0].asBoolean() ? args[1] : args[2];
+    }
+}
+
+export class Random extends Computable {
+    nInputs = 2;
+    fixedInputs = true;
+
+    public compute(...args: ComputeUnit[]): ComputeUnit {
+        this.isDone = true;
+        return new ComputeUnit(~~(Math.random() * (args[1].asNumber() - args[0].asNumber()) + args[0].asNumber()));
+    }
+}
+
+export class JQ extends Computable {
+    nInputs = 2;
+    fixedInputs = true;
+
+    public compute(...args: ComputeUnit[]): ComputeUnit {
+        const json = JSON.parse(args[0].asString());
+        return new ComputeUnit(jsonata(args[1].asString()).evaluate(json));
+    }
+}
+
+export class Timer extends AsyncComputable {
+    nInputs = 2;
+    fixedInputs = true;
+
+    public computeAsync(args: ComputeUnit[]): Promise<ComputeUnit> {
+        return new Promise(res => setTimeout(() => res(new ComputeUnit(args[1]?.value ?? true)), args[0].asNumber()))
+    }
+}
+
+
+export class Fetch extends AsyncComputable {
+    nInputs = 1;
+    fixedInputs = true;
+
+    public async computeAsync(args: ComputeUnit[]): Promise<ComputeUnit> {
+        const req = await fetch(args[0].asString());
+        const res = await req.json();
+        return new ComputeUnit(JSON.stringify(res));
     }
 }

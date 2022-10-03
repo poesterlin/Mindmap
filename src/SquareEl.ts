@@ -32,6 +32,11 @@ export class SquareEl extends Drawable {
     this.p5.textAlign(this.p5.CENTER);
     this.p5.text(this.text, this.anchor.x, this.anchor.y + 10, this.drawWidth);
 
+    if (this.runStarted !== 0) {
+      const start = (Date.now() - this.runStarted) / 300 % 360;
+      this.p5.arc(this.anchor.x, this.anchor.y, handelSize, handelSize, start, (start * 2) % 360)
+    }
+
     if (this.computable instanceof Input || this.computable instanceof Boolean) {
       this.p5.stroke("gray");
       this.p5.strokeWeight(2);
