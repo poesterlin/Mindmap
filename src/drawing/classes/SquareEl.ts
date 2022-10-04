@@ -1,9 +1,9 @@
 import p5 from "p5";
 
 
-import { Computable } from "./Computable";
-import { Boolean, Input } from "./ComputingClasses";
-import { Drawable, headerSize, inputSpacing, handelSize } from "./Drawable";
+import { Computable } from "../../computing/Computable";
+import { Boolean, Input } from "../../computing/ComputingClasses";
+import { Drawable, headerSize, inputSpacing, handelSize } from "../Drawable";
 
 const r = 5;
 export class SquareEl extends Drawable {
@@ -77,7 +77,7 @@ export class SquareEl extends Drawable {
 
   }
 
-  collisionCheck({ x, y }) {
+  collision({ x, y }) {
     return x > this.anchor.x && x < this.anchor.x + this.drawWidth && y > this.anchor.y && y < this.anchor.y + this.height;
   }
 }

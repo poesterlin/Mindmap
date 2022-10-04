@@ -79,11 +79,6 @@ export class If extends Computable {
     fixedInputs = true;
     nInputs = 1;
 
-    constructor() {
-        super();
-        this.outputTypes.forEach(o => this.next[o] = []);
-    }
-
     public compute(...args: ComputeUnit[]): ComputeUnit {
         const val = args[0];
         this.runOutputs = val?.asBoolean() ? ["then"] : ["else"];

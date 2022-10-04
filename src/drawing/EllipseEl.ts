@@ -10,7 +10,7 @@ export class EllipseEl extends Drawable {
     this.p5.ellipse(this.anchor.x, this.anchor.y, this.drawWidth, this.height);
   }
 
-  collisionCheck({ x, y }) {
+  collision({ x, y }) {
     return x > this.anchor.x && x < this.anchor.x + this.drawWidth && y > this.anchor.y && y < this.anchor.y + this.height;
   }
 }

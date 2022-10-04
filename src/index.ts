@@ -1,7 +1,7 @@
 // use this import in your webpack. Commented out because the CDN script exposes p5 as global
 import p5 from "p5";
-import { draw, keyPressed, mouseClicked, mouseDragged, mouseMoved, mouseReleased, preload, setup } from "./script";
-import { testCompute } from "./ComputeEngine";
+import { draw,  mouseClicked, mouseDragged, mouseMoved, mouseReleased, moveOnKeyPress, preload, setup } from "./script";
+import { testCompute } from "./computing/ComputeEngine";
 
 const containerElement = document.getElementById('p5-container');
 containerElement.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -13,8 +13,8 @@ const sketch = (p: p5) => {
     p.mouseClicked = () => mouseClicked(p);
     p.mouseMoved = () => mouseMoved(p);
     p.mouseDragged = () => mouseDragged(p);
-    p.keyPressed = (event) => keyPressed(p, event);
     p.mouseReleased = () => mouseReleased(p);
+    p.keyTyped = ()=> moveOnKeyPress(p);
 };
 
 new p5(sketch, containerElement);

@@ -1,5 +1,5 @@
 import p5 from "p5";
-import { Drawable, handelSize, headerSize, inputSpacing } from "./Drawable";
+import { Drawable, handelSize, headerSize, inputSpacing } from "../drawing/Drawable";
 
 export abstract class Line {
 
@@ -14,15 +14,12 @@ export abstract class Line {
   abstract draw(): void;
 
   calcPos(opts: { el: Drawable, hit: { isInput: boolean, idx: number } }) {
-    let { anchor, height, drawWidth } = opts.el;
+    let { anchor, height, width } = opts.el;
     if (!height) {
       height = 0;
     }
-    if (!drawWidth) {
-      drawWidth = 0;
-    }
 
-    const x = opts.hit.isInput ? anchor.x : anchor.x + drawWidth;
+    const x = opts.hit.isInput ? anchor.x : anchor.x + width;
     return { x, y: anchor.y + headerSize + (opts.hit.idx + 0.5) * inputSpacing + handelSize / 2 };
   }
 }

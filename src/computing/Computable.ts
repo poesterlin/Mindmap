@@ -1,3 +1,5 @@
+import { Link } from "../link/Link";
+
 export class ComputeUnit {
     isError: boolean;
 
@@ -29,8 +31,8 @@ export class ComputeUnit {
 
 
 export abstract class Computable {
-    public prev: Computable[] = [];
-    public next: { [type: string]: Computable[] };
+    public prev: Link[] = [];
+    public next: Link[] = [];
     public outputTypes = ["output"];
     public runOutputs = ["output"];
 
@@ -40,18 +42,16 @@ export abstract class Computable {
     public nInputs = 2;
     public isDone = false;
     public isRunning = false;
-    public onRun = ()=>{};
-    public onDone = ()=>{};
+    public onRun = () => { };
+    public onDone = () => { };
 
     constructor() {
         this.id = ~~(Math.random() * 10000);
-        this.next = {};
-        this.outputTypes.forEach(o => this.next[o] = []);
     }
 
     execute(): string | undefined {
         if (this.canRun()) {
-            this.value = this.compute(...this.prev.map(c => c.value));
+            this.value = this.compute(...this.prev.map(c => c.getOPrevValue()));
             this.isDone = true;
             return `${this.constructor.name}(${this.id}) = ${this.value?.asAny() ?? "#novalue"}`;
         }
@@ -62,7 +62,7 @@ export abstract class Computable {
         if (this.fixedInputs && this.nInputs !== this.prev.length) {
             return false;
         }
-        return this.prev.every(i => i.isDone && !i.isRunning);
+        return this.prev.every(i => i.isPrevDone());
     }
 
     public abstract compute(...args: ComputeUnit[]): ComputeUnit;
@@ -76,7 +76,7 @@ export abstract class AsyncComputable extends Computable {
         if (this.canRun()) {
             this.onRun();
             this.isRunning = true;
-            this.computeAsync(this.prev.map(c => c.value)).then(res => {
+            this.computeAsync(this.prev.map(c => c.getOPrevValue())).then(res => {
                 this.value = res;
                 this.isDone = true;
                 this.isRunning = false;
