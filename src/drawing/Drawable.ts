@@ -24,6 +24,7 @@ export abstract class Drawable {
   };
   enabled = true;
   grow = false;
+  fixedPos = false;
 
   constructor(p5: p5, z: number) {
     this.p5 = p5;
@@ -68,8 +69,8 @@ export abstract class Drawable {
         return a.drawEl(this.anchor)
       })
       .reduce((sum: IPoint, curr: IPoint) => {
-        sum.x = Math.max(sum.x, curr.x);
-        sum.y = Math.max(sum.y, curr.y);
+        sum.x = Math.max(sum.x, curr?.x ?? 0);
+        sum.y = Math.max(sum.y, curr?.y ?? 0);
 
         return sum;
       }, { x: 0, y: 0 } as IPoint);
@@ -102,6 +103,9 @@ export abstract class Drawable {
   }
 
   moveBy({ x, y }: IPoint): void {
+    if (this.fixedPos) {
+      return;
+    }
     this.anchor = { x: this.anchor.x + x, y: this.anchor.y + y };
   }
 

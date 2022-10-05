@@ -1,6 +1,8 @@
 import { Computable, ComputeUnit } from "./Computable";
 import { Input, Add, If, Log, Equals, Boolean } from "./ComputingClasses";
 import { Link } from "../link/Link";
+import { Drawable } from "../drawing/Drawable";
+import { InputDrawable, LinksDrawable } from "../drawing/classes/DrawingClasses";
 
 export async function testCompute() {
 
@@ -100,8 +102,8 @@ export class ComputeEngine {
         ops.isInput.prev[ops.idx].unlink();
     }
 
-    public link(ops: { isOutput: Computable, outputType?: string; isInput: Computable, number: number }) {
-        new Link(ops.isOutput, ops.outputType, ops.isInput, ops.number);
+    public link(ops: { isOutput: Computable, outputType?: string; isInput: LinksDrawable, number: number }) {
+        new Link(ops.isOutput, ops.outputType, ops.isInput, ops.isInput.computable, ops.number);
     }
 
 }

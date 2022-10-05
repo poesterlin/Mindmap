@@ -13,6 +13,7 @@ export class ToolDrawable extends Drawable {
         this.anchor = { x: 0, y: idx * this.height };
 
         this.attached = [new TipDrawable(p5, this.name)];
+        this.fixedPos = true;
     }
 
     drawEl(_anchor: IPoint): IPoint {
@@ -38,6 +39,5 @@ export class ToolDrawable extends Drawable {
 
     onClick() {
         this.fn();
-        debugger
     }
 }

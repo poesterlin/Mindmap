@@ -1,5 +1,6 @@
 import { Computable } from "../computing/Computable";
 import { LinksDrawable } from "../drawing/classes/DrawingClasses";
+import { handelSize, headerSize, inputSpacing } from "../drawing/Drawable";
 
 export class Link {
     constructor(
@@ -27,5 +28,15 @@ export class Link {
         this.input.prev.splice(this.inputIdx);
     }
 
+    public inputPoint() {
+        return idxToPoint(this.inputIdx);
+    }
 
+    public outputPoint() {
+        return idxToPoint(this.output.outputTypes.findIndex(i => i === this.outputType));
+    }
+}
+
+export function idxToPoint(idx: number) {
+    return headerSize + (idx + 0.5) * inputSpacing;
 }

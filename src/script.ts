@@ -6,6 +6,7 @@ import { Tools } from "./Tools";
 import { EntityModel, IPoint } from "./drawing/Entity";
 import { FunctionDrawable } from "./drawing/classes/Function";
 import { ToolDrawable } from "./drawing/classes/Tools";
+import { LinksDrawable } from "./drawing/classes/DrawingClasses";
 
 let entityModel = new EntityModel();
 let engine = new ComputeEngine();
@@ -44,6 +45,7 @@ export function setup(p: p5) {
       const drawable = t.initDrawable(p, 1, computable);
 
       engine.addOperator(computable);
+      engine.link({ isInput: drawable.attached[0] as LinksDrawable, isOutput: computable, number: 0 })
       entityModel.add(drawable);
     }
     entityModel.add(new ToolDrawable(p, i, t.tip, tools.images[t.icon], fn));
@@ -80,9 +82,15 @@ export function mouseReleased(p: p5) {
   entityModel.unselect();
 }
 
-export function mouseDragged(p: p5) {
-  entityModel.moveWithMouse(p);
+export function mouseDragged(p5: p5) {
+  entityModel.moveWithMouse(p5);
+
   // todo temporary link
+
+  if (p5.mouseButton === p5.RIGHT || entityModel.getSelected().length === 0) {
+    const by: IPoint = { x: p5.mouseX - p5.pmouseX, y: p5.mouseY - p5.pmouseY };
+    entityModel.moveAll(by)
+  }
 }
 
 export function moveOnKeyPress(p: p5) {
@@ -108,9 +116,11 @@ export function moveOnKeyPress(p: p5) {
   }
 
   const drawable = entityModel.getSelected();
-  drawable.forEach(element => {
-    element.keystroke();
-  });
+  debounce(() =>
+    drawable.forEach(element => {
+      element.keystroke();
+    })
+    , 140, 80);
 
   return false;
 }
@@ -118,7 +128,7 @@ export function moveOnKeyPress(p: p5) {
 var lastCall = 0;
 var interval = 0;
 var ref = undefined;
-function debounce(func: () => void, intervalF, continueAt) {
+export function debounce(func: () => void, intervalF, continueAt) {
   var now = Date.now();
   if (interval === 0) {
     interval = intervalF;

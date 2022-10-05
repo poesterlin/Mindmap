@@ -9,6 +9,8 @@ export class FunctionDrawable extends Drawable {
         this.width = 100;
         this.height = 20;
         this.anchor = { x: p5.width - this.width, y: idx * this.height };
+        
+        this.fixedPos = true;
     }
 
     drawEl(_anchor: IPoint): IPoint {

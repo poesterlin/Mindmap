@@ -1,6 +1,6 @@
 import p5 from "p5";
-import { Computable } from "../../computing/Computable";
-import { Link } from "../../link/Link";
+import { Computable, ComputeUnit } from "../../computing/Computable";
+import { idxToPoint, Link } from "../../link/Link";
 import { Drawable, handelSize, headerSize, inputSpacing } from "../Drawable";
 import { IPoint } from "../Entity";
 
@@ -11,40 +11,7 @@ export abstract class ComputingDrawable extends Drawable {
         super(p5, z);
     }
 
-    get inputs() {
-        const num = this.computable.fixedInputs ? this.computable.nInputs : this.computable.prev.length + 1;
 
-        return new Array(num).fill(null).map((_, i) => ({
-            x: this.anchor.x - handelSize / 2,
-            y: this.anchor.y + headerSize + (i + 0.5) * inputSpacing,
-        }))
-    }
-
-    get outputs() {
-        const num = this.computable.outputTypes.length;
-
-        return new Array(num).fill(null).map((_, i) => ({
-            x: this.anchor.x + this.width - handelSize / 2,
-            y: this.anchor.y + headerSize + (i + 0.5) * inputSpacing,
-        }))
-    }
-
-
-    connectorCheck(p: { x: number, y: number }) {
-        const inputCheck = this.checkCollisionArray(p, this.inputs);
-        if (inputCheck > -1) {
-            return { isInput: true, idx: inputCheck }
-        }
-        const outputCheck = this.checkCollisionArray(p, this.outputs);
-        if (outputCheck > -1) {
-            return { isInput: false, idx: outputCheck }
-        }
-        return { idx: -1, isInput: false };
-    }
-
-    checkCollisionArray({ x, y }, arr: { x: number, y: number }[]) {
-        return arr.findIndex((h) => x > h.x && x < h.x + handelSize && y > h.y && y < h.y + handelSize);
-    }
 }
 
 export class InputLink extends Drawable {
@@ -53,11 +20,7 @@ export class InputLink extends Drawable {
     }
 
     drawEl(anchor: IPoint): IPoint {
-        // const start = this.link.inputDrawable.inputs[this.link.inputIdx];
-        // const endIdx = this.link.output.outputTypes.findIndex(o => this.link.outputType === o);
-
-
-        // this.p5.line(start.x, start.y, end.x, end.y);
+        this.p5.line(anchor.x, this.link.inputPoint(), anchor.x, this.link.outputPoint());
 
         return { x: 0, y: 0 }
     }
@@ -99,17 +62,23 @@ export class LinksDrawable extends ComputingDrawable {
     drawEl(_anchor: IPoint): IPoint {
         this.attached = [];
 
-        this.inputs.forEach(i => {
-            this.p5.circle(i.x, i.y, handelSize)
+        const num = this.computable.fixedInputs ? this.computable.nInputs : this.computable.prev.length + 1;
 
-        })
+        for (let i = 0; i < num; i++) {
+            this.p5.circle(_anchor.x - handelSize / 2, _anchor.y + idxToPoint(i), handelSize)
+        }
 
+        for (let i = 0; i < this.computable.outputTypes.length; i++) {
+            this.p5.circle(_anchor.x + this.width - handelSize / 2, _anchor.y + idxToPoint(i), handelSize)
+        }
 
-        return { x: 0, y: 0 }
+        const max = Math.max(num, this.computable.outputTypes.length)
+
+        return { x: this.width, y: idxToPoint(max) }
     }
 
     onHover(): void {
-
+        this.style.fill = this.p5.color(10, 255, 100);
     }
 
     afterHover(): void {
@@ -129,12 +98,15 @@ export class InputDrawable extends Drawable {
     constructor(p5: p5, z: number, public computable: Computable) {
         super(p5, z);
 
-        this.grow = false;
+        this.grow = true;
         this.anchor = { x: 100, y: 100 };
         this.width = 100;
         this.height = 200;
 
-        this.attached = [new LinksDrawable(p5, z, computable)];
+        const inp = new LinksDrawable(p5, z, computable)
+        inp.width = this.width;
+        this.attached = [inp];
+
     }
 
     drawEl(_anchor: IPoint): IPoint {
@@ -150,6 +122,10 @@ export class InputDrawable extends Drawable {
         this.p5.noStroke();
         this.p5.fill(this.focused ? 255 : 0);
         this.p5.text(this.computable.constructor.name, this.anchor.x, this.anchor.y + 10, this.width, this.height);
+
+        this.p5.fill(0)
+        const val = this.computable.value?.asString();
+        this.p5.text(val, this.anchor.x, this.anchor.y + headerSize, this.width, this.height);
 
         return { x: 0, y: 0 }
     }
@@ -171,6 +147,48 @@ export class InputDrawable extends Drawable {
         this.style.stroke = 0;
     }
     beforeDelete(): void {
+    }
+
+    keystroke() {
+        const val = this.computable.value?.asAny();
+
+        if (this.p5.keyIsDown(this.p5.BACKSPACE)) {
+
+            if (val === undefined) {
+                return;
+            }
+
+            if (typeof val === "number") {
+                if (val === 0) {
+                    this.computable.value = undefined;
+                    return;
+                }
+                this.computable.value = new ComputeUnit(Math.floor(val / 10));
+            }
+
+            if (typeof val === "string") {
+                this.computable.value = new ComputeUnit(val.slice(0, -1));
+            }
+
+            if (typeof val === "boolean") {
+                this.computable.value = new ComputeUnit(!val);
+            }
+
+            return;
+        }
+
+        let key = this.p5.key;
+        if (key.length > 1) {
+            return;
+        }
+        let newVal: string | number = val === undefined ? key : val + key;
+
+        const parsed = parseFloat(newVal);
+        if (!isNaN(parsed)) {
+            newVal = parsed;
+        }
+
+        this.computable.value = new ComputeUnit(newVal);
     }
 
 }

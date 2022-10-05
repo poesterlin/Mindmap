@@ -14,7 +14,7 @@ const sketch = (p: p5) => {
     p.mouseMoved = () => mouseMoved(p);
     p.mouseDragged = () => mouseDragged(p);
     p.mouseReleased = () => mouseReleased(p);
-    p.keyTyped = ()=> moveOnKeyPress(p);
+    p.keyPressed = ()=> moveOnKeyPress(p);
 };
 
 new p5(sketch, containerElement);
