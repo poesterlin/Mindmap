@@ -171,7 +171,7 @@ function scale(p: p5, x, y, [x2, y2]): [number, number] {
 }
 
 function getRLPosition(p: p5) {
-  return p.createVector(x, y).add(vec.mult(8.3 * mouseRes)) // 3.2
+  return p.createVector(x, y).add(vec.mult(3.2 * mouseRes)) // 3.2
 }
 
 function drawCamera(p: p5) {
